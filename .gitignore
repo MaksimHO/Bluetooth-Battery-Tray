@@ -1,5 +1,4 @@
 build/
-dist/
 .vs/
 *.user
 *.suo
@@ -13,6 +12,7 @@ x64/
 x86/
 *.obj
 *.exe
+!dist/*.exe
 *.pdb
 *.ilk
 *.log

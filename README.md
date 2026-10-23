@@ -40,18 +40,20 @@ devices such as HFP headsets. No admin rights required.
 
 ### Installer
 
-Download `BluetoothBatteryTray-Setup-1.0.0.exe` and run it. The installer is
-per-user (installs to `%LOCALAPPDATA%\Programs\Bluetooth Battery Tray`) and
-offers two optional tasks:
+Download
+[`BluetoothBatteryTray-Setup-1.0.0.exe`](dist/BluetoothBatteryTray-Setup-1.0.0.exe) and
+run it. The installer is per-user (installs to
+`%LOCALAPPDATA%\Programs\Bluetooth Battery Tray`) and offers two optional tasks:
 
 - start with Windows;
 - create a desktop shortcut.
 
 ### Portable
 
-Download `BluetoothBatteryTray-portable-1.0.0.zip`, unpack it anywhere and run
-`BluetoothBatteryTray.exe`. Autostart is not configured in portable mode — add
-a shortcut to `shell:startup` if you want it.
+Download
+[`BluetoothBatteryTray-portable-1.0.0.zip`](dist/BluetoothBatteryTray-portable-1.0.0.zip),
+unpack it anywhere and run `BluetoothBatteryTray.exe`. Autostart is not
+configured in portable mode — add a shortcut to `shell:startup` if you want it.
 
 > The binaries are not code-signed, so SmartScreen may show a warning on first
 > launch. Choose "More info" → "Run anyway".
