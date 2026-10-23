@@ -1,10 +1,10 @@
-#include <windows.h>
+﻿#include <windows.h>
 
 101 ICON "app.ico"
 
 1 VERSIONINFO
-FILEVERSION 1,0,0,0
-PRODUCTVERSION 1,0,0,0
+FILEVERSION 1,1,0,0
+PRODUCTVERSION 1,1,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS VOS_NT_WINDOWS32
@@ -17,11 +17,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Bluetooth Battery Tray"
             VALUE "FileDescription", "Bluetooth Battery Tray"
-            VALUE "FileVersion", "1.0.0"
+            VALUE "FileVersion", "1.1.0"
             VALUE "InternalName", "BluetoothBatteryTray"
             VALUE "OriginalFilename", "BluetoothBatteryTray.exe"
             VALUE "ProductName", "Bluetooth Battery Tray"
-            VALUE "ProductVersion", "1.0.0"
+            VALUE "ProductVersion", "1.1.0"
         END
     END
     BLOCK "VarFileInfo"

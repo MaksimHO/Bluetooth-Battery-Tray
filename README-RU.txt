@@ -1,4 +1,4 @@
-Bluetooth Battery Tray 1.0.0
+Bluetooth Battery Tray 1.1.0
 ============================
 
 Показывает заряд подключённых Bluetooth-устройств прямо в системном трее.

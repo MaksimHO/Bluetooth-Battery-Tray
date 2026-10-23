@@ -830,8 +830,15 @@ static HFONT CreateUiFont()
 {
     NONCLIENTMETRICSW metrics = {};
     metrics.cbSize = sizeof(metrics);
-    if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0))
+    if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0)) {
+        // One point above the stock message font: the device list has a lot of
+        // short strings and the default size looks cramped at 100% scaling.
+        int dpi = static_cast<int>(GetDpiForSystem());
+        if (dpi <= 0)
+            dpi = 96;
+        metrics.lfMessageFont.lfHeight = -MulDiv(10, dpi, 72);
         return CreateFontIndirectW(&metrics.lfMessageFont);
+    }
     return static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
 }
 
@@ -957,7 +964,7 @@ static void LayoutDevicesWindow(HWND hWnd)
     const int margin = ScaleForDpi(12, hWnd);
     const int gap = ScaleForDpi(8, hWnd);
     const int buttonW = ScaleForDpi(110, hWnd);
-    const int buttonH = ScaleForDpi(28, hWnd);
+    const int buttonH = ScaleForDpi(30, hWnd);
     const int bottomY = rc.bottom - margin - buttonH;
     const int listHeight = bottomY - gap - margin;
 
@@ -975,6 +982,31 @@ static void LayoutDevicesWindow(HWND hWnd)
     const int statusWidth = x - margin;
     MoveWindow(g_status, margin, bottomY + ScaleForDpi(8, hWnd),
         statusWidth > 0 ? statusWidth : 0, buttonH, TRUE);
+}
+
+// The header of a list view draws its text with the theme's own color, which is
+// dark gray in dark mode and nearly invisible on the dark header background.
+// Intercepting the header's custom draw lets us force a readable color.
+static LRESULT CALLBACK DeviceListSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam,
+    UINT_PTR, DWORD_PTR)
+{
+    if (msg == WM_NOTIFY) {
+        auto note = reinterpret_cast<LPNMHDR>(lParam);
+        if (note->code == NM_CUSTOMDRAW && note->hwndFrom == ListView_GetHeader(hWnd)) {
+            auto draw = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
+            if (draw->dwDrawStage == CDDS_PREPAINT)
+                return CDRF_NOTIFYITEMDRAW;
+            if (draw->dwDrawStage == CDDS_ITEMPREPAINT) {
+                SetTextColor(draw->hdc, darkmode::IsDark()
+                    ? RGB(255, 255, 255)
+                    : GetSysColor(COLOR_BTNTEXT));
+                SetBkMode(draw->hdc, TRANSPARENT);
+                return CDRF_NEWFONT;
+            }
+        }
+    }
+
+    return DefSubclassProc(hWnd, msg, wParam, lParam);
 }
 
 static void ApplyDeviceListTheme()
@@ -1002,20 +1034,24 @@ LRESULT CALLBACK DevicesWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
                 WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER,
                 0, 0, 0, 0, hWnd, reinterpret_cast<HMENU>(IDC_DEVICE_LIST), g_hInst, nullptr);
             ListView_SetExtendedListViewStyle(g_list,
-                LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_GRIDLINES);
+                LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
             SendMessageW(g_list, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
+            SetWindowSubclass(g_list, DeviceListSubclassProc, 1, 0);
 
-            g_thumbSize = ScaleForDpi(16, hWnd);
+            g_thumbSize = ScaleForDpi(26, hWnd);
             g_thumbList = ImageList_Create(g_thumbSize, g_thumbSize, ILC_COLOR32, 8, 8);
             if (g_thumbList)
                 ListView_SetImageList(g_list, g_thumbList, LVSIL_SMALL);
 
+            if (HWND header = ListView_GetHeader(g_list))
+                SendMessageW(header, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
+
             struct Column { const wchar_t* title; int width; };
             const Column columns[] = {
-                { L"Device", 240 },
-                { L"Address", 150 },
-                { L"Battery", 80 },
-                { L"Status", 110 },
+                { L"Device", 260 },
+                { L"Address", 160 },
+                { L"Battery", 90 },
+                { L"Status", 120 },
             };
             for (int i = 0; i < static_cast<int>(std::size(columns)); ++i) {
                 LVCOLUMNW column = {};
@@ -1064,8 +1100,8 @@ LRESULT CALLBACK DevicesWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_GETMINMAXINFO:
         {
             auto info = reinterpret_cast<MINMAXINFO*>(lParam);
-            info->ptMinTrackSize.x = ScaleForDpi(600, hWnd);
-            info->ptMinTrackSize.y = ScaleForDpi(240, hWnd);
+            info->ptMinTrackSize.x = ScaleForDpi(640, hWnd);
+            info->ptMinTrackSize.y = ScaleForDpi(300, hWnd);
         }
         return 0;
 
@@ -1172,20 +1208,24 @@ LRESULT CALLBACK DevicesWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
                         const LPARAM data = draw->nmcd.lItemlParam;
                         const int percent = static_cast<int>(data & 0xFFFF) - 1;
                         const bool connected = (data & 0x10000) != 0;
+                        const bool dark = darkmode::IsDark();
 
                         if (draw->iSubItem == 2) {
                             if (percent < 0 || !connected)
-                                draw->clrText = RGB(130, 130, 130);
+                                draw->clrText = dark ? RGB(170, 170, 170) : RGB(130, 130, 130);
                             else if (percent <= 20)
-                                draw->clrText = RGB(200, 0, 0);
+                                draw->clrText = dark ? RGB(255, 120, 120) : RGB(200, 0, 0);
                             else if (percent <= 50)
-                                draw->clrText = RGB(175, 120, 0);
+                                draw->clrText = dark ? RGB(245, 190, 90) : RGB(175, 120, 0);
                             else
-                                draw->clrText = RGB(0, 135, 0);
+                                draw->clrText = dark ? RGB(110, 210, 110) : RGB(0, 135, 0);
                             return CDRF_NEWFONT;
                         }
                         if (draw->iSubItem == 3) {
-                            draw->clrText = connected ? RGB(0, 135, 0) : RGB(130, 130, 130);
+                            if (connected)
+                                draw->clrText = dark ? RGB(110, 210, 110) : RGB(0, 135, 0);
+                            else
+                                draw->clrText = dark ? RGB(170, 170, 170) : RGB(130, 130, 130);
                             return CDRF_NEWFONT;
                         }
                     }
@@ -1201,6 +1241,8 @@ LRESULT CALLBACK DevicesWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         return 0;
 
     case WM_DESTROY:
+        if (g_list)
+            RemoveWindowSubclass(g_list, DeviceListSubclassProc, 1);
         if (g_uiFont) {
             DeleteObject(g_uiFont);
             g_uiFont = nullptr;
@@ -1227,7 +1269,7 @@ static void ShowDevicesWindow()
         g_win = CreateWindowExW(0, L"BluetoothBatteryWindowClass", L"Bluetooth Battery Monitor",
             WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT,
-            ScaleForDpi(640, nullptr), ScaleForDpi(420, nullptr),
+            ScaleForDpi(700, nullptr), ScaleForDpi(470, nullptr),
             nullptr, nullptr, g_hInst, nullptr);
         if (!g_win)
             return;

@@ -1,5 +1,5 @@
 ﻿#define AppName "Bluetooth Battery Tray"
-#define AppVersion "1.0.0"
+#define AppVersion "1.1.0"
 #define AppPublisher "Bluetooth Battery Tray"
 #define AppExeName "BluetoothBatteryTray.exe"
 
@@ -29,7 +29,7 @@ RestartApplications=no
 VersionInfoCompany={#AppPublisher}
 VersionInfoDescription={#AppName} Setup
 VersionInfoProductName={#AppName}
-VersionInfoVersion=1.0.0.0
+VersionInfoVersion=1.1.0.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

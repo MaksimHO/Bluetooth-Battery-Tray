@@ -6,6 +6,8 @@ devices — one tray icon per device, each with its own picture, updated live.
 Works with BLE peripherals (mice, keyboards, earbuds) and classic Bluetooth
 devices such as HFP headsets. No admin rights required.
 
+**Download:** [latest release](https://github.com/MaksimHO/Bluetooth-Battery-Tray/releases/latest)
+
 > Русская инструкция: [README-RU.txt](README-RU.txt)
 
 ## Features
@@ -40,18 +42,19 @@ devices such as HFP headsets. No admin rights required.
 
 ### Installer
 
-Download
-[`BluetoothBatteryTray-Setup-1.0.0.exe`](dist/BluetoothBatteryTray-Setup-1.0.0.exe) and
-run it. The installer is per-user (installs to
-`%LOCALAPPDATA%\Programs\Bluetooth Battery Tray`) and offers two optional tasks:
+Download the
+[latest release](https://github.com/MaksimHO/Bluetooth-Battery-Tray/releases/latest),
+run `BluetoothBatteryTray-Setup-1.1.0.exe`. The installer is per-user (installs
+to `%LOCALAPPDATA%\Programs\Bluetooth Battery Tray`) and offers two optional
+tasks:
 
 - start with Windows;
 - create a desktop shortcut.
 
 ### Portable
 
-Download
-[`BluetoothBatteryTray-portable-1.0.0.zip`](dist/BluetoothBatteryTray-portable-1.0.0.zip),
+Download `BluetoothBatteryTray-portable-1.1.0.zip` from the
+[latest release](https://github.com/MaksimHO/Bluetooth-Battery-Tray/releases/latest),
 unpack it anywhere and run `BluetoothBatteryTray.exe`. Autostart is not
 configured in portable mode — add a shortcut to `shell:startup` if you want it.
 
