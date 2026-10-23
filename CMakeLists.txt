@@ -11,6 +11,8 @@ add_executable(BluetoothBatteryTray WIN32
     src/main.cpp
     src/BatteryMonitor.h
     src/BatteryMonitor.cpp
+    src/DarkMode.h
+    src/DarkMode.cpp
     resources/resource.rc
 )
 
@@ -27,6 +29,8 @@ target_link_libraries(BluetoothBatteryTray PRIVATE
     setupapi
     windowscodecs
     comdlg32
+    uxtheme
+    dwmapi
 )
 
 target_compile_definitions(BluetoothBatteryTray PRIVATE

@@ -21,6 +21,8 @@ devices such as HFP headsets. No admin rights required.
   pinned icon returns to the same spot after reconnecting or restarting the app.
 - **Explorer-restart safe** — icons are re-registered on the shell's
   `TaskbarCreated` broadcast.
+- **Light and dark themes** — the device list follows the Windows app theme and
+  switches live when the setting changes; the tray menu follows as well.
 - **Device list window** — all paired devices in one list, including devices
   that are currently offline; only connected ones appear in the tray.
 - **Single instance** — launching the exe again just opens the device list of
@@ -147,6 +149,8 @@ frames and the alpha mask, so every size stays sharp and transparent.
 src/main.cpp              tray icons, rendering, device list window, message loop
 src/BatteryMonitor.cpp    device scan pipeline, battery sources, DeviceWatcher
 src/BatteryMonitor.h      DeviceBatteryInfo and watcher API
+src/DarkMode.cpp          light/dark theme following the Windows setting
+src/DarkMode.h            dark mode helpers
 resources/app.ico         multi-size application icon
 resources/app-source.png  icon source image
 resources/resource.rc     icon and version resource

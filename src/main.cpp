@@ -1,4 +1,5 @@
 #include "BatteryMonitor.h"
+#include "DarkMode.h"
 #include <windows.h>
 #include <commctrl.h>
 #include <shellapi.h>
@@ -976,6 +977,20 @@ static void LayoutDevicesWindow(HWND hWnd)
         statusWidth > 0 ? statusWidth : 0, buttonH, TRUE);
 }
 
+static void ApplyDeviceListTheme()
+{
+    if (!g_list)
+        return;
+
+    ListView_SetBkColor(g_list, darkmode::BackgroundColor());
+    ListView_SetTextBkColor(g_list, darkmode::BackgroundColor());
+    ListView_SetTextColor(g_list, darkmode::TextColor());
+
+    darkmode::ApplyToControl(g_list);
+    if (HWND header = ListView_GetHeader(g_list))
+        darkmode::ApplyToControl(header, L"DarkMode_ItemsView");
+}
+
 LRESULT CALLBACK DevicesWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
@@ -1031,6 +1046,13 @@ LRESULT CALLBACK DevicesWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
                 0, 0, 0, 0, hWnd, reinterpret_cast<HMENU>(IDC_STATUS_TEXT), g_hInst, nullptr);
             SendMessageW(g_status, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
 
+            darkmode::ApplyToWindow(hWnd);
+            ApplyDeviceListTheme();
+            darkmode::ApplyToControl(g_refreshBtn);
+            darkmode::ApplyToControl(g_setIconBtn);
+            darkmode::ApplyToControl(g_clearIconBtn);
+            darkmode::ApplyToControl(g_status);
+
             RefreshDeviceList();
         }
         return 0;
@@ -1047,13 +1069,36 @@ LRESULT CALLBACK DevicesWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         }
         return 0;
 
+    case WM_ERASEBKGND:
+        {
+            RECT rc;
+            GetClientRect(hWnd, &rc);
+            FillRect(reinterpret_cast<HDC>(wParam), &rc, darkmode::BackgroundBrush());
+        }
+        return 1;
+
     case WM_CTLCOLORSTATIC:
         {
             HDC hdc = reinterpret_cast<HDC>(wParam);
             SetBkMode(hdc, TRANSPARENT);
-            SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
-            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
+            SetTextColor(hdc, darkmode::TextColor());
+            return reinterpret_cast<LRESULT>(darkmode::BackgroundBrush());
         }
+
+    case WM_SETTINGCHANGE:
+        if (lParam && wcscmp(reinterpret_cast<LPCWSTR>(lParam), L"ImmersiveColorSet") == 0) {
+            if (darkmode::OnSystemThemeChanged()) {
+                darkmode::ApplyToWindow(hWnd);
+                ApplyDeviceListTheme();
+                darkmode::ApplyToControl(g_refreshBtn);
+                darkmode::ApplyToControl(g_setIconBtn);
+                darkmode::ApplyToControl(g_clearIconBtn);
+                darkmode::ApplyToControl(g_status);
+                RedrawWindow(hWnd, nullptr, nullptr,
+                    RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
+            }
+        }
+        return 0;
 
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
@@ -1317,6 +1362,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
     LoadTrayIds();
 
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
+    // Opt the process into dark mode before any window exists; the setting only
+    // applies to windows and controls created afterwards.
+    darkmode::Initialize();
 
     INITCOMMONCONTROLSEX icex = { sizeof(INITCOMMONCONTROLSEX), ICC_STANDARD_CLASSES };
     InitCommonControlsEx(&icex);
